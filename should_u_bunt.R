@@ -6,6 +6,7 @@ usePackage <- function(p) {
   require(p, character.only = TRUE)
 }
 
+
 listPackages <- c("baseballr", "dplyr", "RcppRoll", "zoo", "lubridate", "tidyverse",
                   "tree", "caret", "randomForest", "rvest", "ggalt", "remotes")
 
