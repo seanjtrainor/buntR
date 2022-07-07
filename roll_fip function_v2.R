@@ -478,7 +478,7 @@ roll_lg_woba <- function (x, r=NULL, rl_excl="N") {
                                 (df_join$wHR * df_join$HR))/(df_join$AB - df_join$SO)), 
                             3)
   df_join <- df_join %>% dplyr::arrange(dplyr::desc(.data$wOBA))
-  x <- names(df_join) %in% c("lg_woba", "woba_scale", "wBB", 
+  x <- names(df_join) %in% c("wBB", 
                              "wHBP", "w1B", "w2B", "w3B", "wHR", "runSB", "runCS", 
                              "lg_r_pa", "lg_r_w", "cFIP")
   df_join <- df_join[!x]
