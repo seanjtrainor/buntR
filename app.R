@@ -87,10 +87,7 @@ server <- function(input, output) {
     #Input data
   datasetInput <- reactive({
     
-    if(is.na(input$on1b) & is.na(input$on2b) & is.na(input$on3b)){
-      return("Need a runner on base for a sacrafice.")
-    }
-    
+
     inp <- pitch_max %>% filter(pitcher_name == input$pitch) %>%
       left_join(p_throw, by = "pitcher") %>%
       cbind(filter(bat_max, hitter_name == input$bat)%>%
