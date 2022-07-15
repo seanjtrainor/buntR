@@ -191,7 +191,7 @@ season_pbp <- function(year) {
   return(pbp_fin)
 }
 
-test <- season_pbp(2022)
+
 
 
 

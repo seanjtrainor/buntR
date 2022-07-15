@@ -8,7 +8,7 @@ usePackage <- function(p) {
 
 
 listPackages <- c("baseballr", "dplyr", "RcppRoll", "zoo", "lubridate", "tidyverse",
-                  "tree", "caret", "randomForest", "rvest", "ggalt", "remotes", "gbm", "glmnet")
+                  "tree", "caret", "randomForest", "rvest", "ggalt", "remotes", "gbm", "glmnet", "shiny", "shinythemes")
 
 sapply(listPackages, usePackage)
 remotes::install_github("seanjtrainor/shiftr")
@@ -33,23 +33,23 @@ chadwick_player_lu_table <- subset(chadwick_player_lu(), !is.na(key_mlbam)) %>%
 
 #bring in sprint speeds
 
-sprint.speed18 <- read.csv("~/Desktop/baseball/shiftr/sprint_speed (4).csv") %>%
+sprint.speed18 <- read.csv("~/Desktop/baseball/buntR/sprint_speed_18.csv") %>%
   dplyr::select(player_id, sprint_speed) %>% 
   dplyr::mutate(game_year = "2018")
 
-sprint.speed19 <- read.csv("~/Desktop/baseball/shiftr/sprint_speed (1).csv") %>%
+sprint.speed19 <- read.csv("~/Desktop/baseball/buntR/sprint_speed_19.csv") %>%
   dplyr::select(player_id, sprint_speed) %>% 
   dplyr::mutate(game_year = "2019")
 
-sprint.speed20 <- read.csv("~/Desktop/baseball/shiftr/sprint_speed (2).csv") %>%
+sprint.speed20 <- read.csv("~/Desktop/baseball/buntR/sprint_speed_20.csv") %>%
   dplyr::select(player_id, sprint_speed) %>% 
   dplyr::mutate(game_year = "2020")
 
-sprint.speed21 <- read.csv("~/Desktop/baseball/shiftr/sprint_speed (3).csv") %>%
+sprint.speed21 <- read.csv("~/Desktop/baseball/buntR/sprint_speed_21.csv") %>%
   dplyr::select(player_id, sprint_speed) %>% 
   dplyr::mutate(game_year = "2021")
 
-sprint.speed22 <- read.csv("~/Desktop/baseball/shiftr/sprint_speed (6).csv") %>%
+sprint.speed22 <- read.csv("~/Desktop/baseball/buntR/sprint_speed_22.csv") %>%
   dplyr::select(player_id, sprint_speed) %>% 
   dplyr::mutate(game_year = "2022")
 
@@ -58,7 +58,9 @@ sprint.speed <- rbind(sprint.speed18, sprint.speed19, sprint.speed20, sprint.spe
 sprint_max <- sprint.speed %>%
   group_by(player_id) %>%
   filter(game_year == max(game_year)) %>%
-  select(-c(game_year))
+  select(-c(game_year)) %>%
+  rbind(data.frame(player_id = NA,
+                   sprint_speed = NA))
 
 rm(sprint.speed18, sprint.speed19, sprint.speed20, sprint.speed21, sprint.speed22)
 
@@ -535,6 +537,8 @@ sit1_input_fin_comp <- sit1_input_fin[complete.cases(sit1_input_fin),]
 sit1_input_fin_comp_scale <- sit1_input_fin_comp
 sit1_input_fin_comp_scale[3:48] <- scale(sit1_input_fin_comp_scale[3:48])
 
+write.csv(sit1_input_fin_comp, "~/Desktop/baseball/buntR/sit1_input.csv", row.names = FALSE)
+
 ###############################################
 # Fit a GLM - Poisson model for runs generated
 ################################################
@@ -605,8 +609,6 @@ yhat.rf <- predict(rf.bunt, newdata = sit1_input_fin_comp[-train,])
 mean((yhat.rf - y.test)^2)
 importance(rf.bunt)
 
-library(gbm)
-
 boost.bunt.sit1.inp <- gbm(runs_created ~., data = sit1_input_fin_comp[train,],
                   distribution = "poisson", n.trees = 500,
                   interaction.depth = 4)
@@ -627,11 +629,13 @@ sit1_output_fin_comp <- sit1_output_fin[complete.cases(sit1_output_fin),]
 sit1_output_fin_comp_scale <- sit1_output_fin_comp
 sit1_output_fin_comp_scale[3:48] <- scale(sit1_output_fin_comp_scale[3:48])
 
-x.op.sit1<- model.matrix(runs_created ~., sit1_output_fin_comp_scale)[,-1]
+write.csv(sit1_output_fin_comp, "~/Desktop/baseball/buntR/sit1_output.csv", row.names = FALSE)
+
+#x.op.sit1<- model.matrix(runs_created ~., sit1_output_fin_comp_scale)[,-1]
 y.op.sit1 <- sit1_output_fin_comp_scale$runs_created
 
 set.seed(3453)
-train.op.sit1 <- sample(1:nrow(x.op.sit1), nrow(x.op.sit1)*.75)
+train.op.sit1 <- sample(1:nrow(sit1_output_fin_comp), nrow(sit1_output_fin_comp)*.75)
 test.op.sit1 <- (-train.op.sit1)
 y.test.op.sit1 <- y.op.sit1[test.op.sit1]
 
@@ -669,10 +673,12 @@ sit2_input_fin_comp <- sit2_input_fin[complete.cases(sit2_input_fin),]
 sit2_input_fin_comp_scale <- sit2_input_fin_comp
 sit2_input_fin_comp_scale[3:48] <- scale(sit2_input_fin_comp_scale[3:48])
 
-x.ip.sit2<- model.matrix(runs_created ~., sit2_input_fin_comp_scale)[,-1]
+write.csv(sit2_input_fin_comp, "~/Desktop/baseball/buntR/sit2_input.csv", row.names = FALSE)
+
+#x.ip.sit2<- model.matrix(runs_created ~., sit2_input_fin_comp_scale)[,-1]
 y.ip.sit2 <- sit2_input_fin_comp_scale$runs_created
 
-train.ip.sit2 <- sample(1:nrow(x.ip.sit2), nrow(x.ip.sit2)*.75)
+train.ip.sit2 <- sample(1:nrow(sit2_input_fin_comp), nrow(sit2_input_fin_comp)*.75)
 test.ip.sit2 <- (-train.ip.sit2)
 y.test.ip.sit2 <- y.ip.sit2[test.ip.sit2]
 
@@ -706,10 +712,12 @@ sit2_output_fin_comp <- sit2_output_fin[complete.cases(sit2_output_fin),]
 sit2_output_fin_comp_scale <- sit2_output_fin_comp
 sit2_output_fin_comp_scale[3:48] <- scale(sit2_output_fin_comp_scale[3:48])
 
-x.op.sit2<- model.matrix(runs_created ~., sit2_output_fin_comp_scale)[,-1]
+write.csv(sit2_output_fin_comp, "~/Desktop/baseball/buntR/sit2_output.csv", row.names = FALSE)
+
+#x.op.sit2<- model.matrix(runs_created ~., sit2_output_fin_comp_scale)[,-1]
 y.op.sit2 <- sit2_output_fin_comp_scale$runs_created
 
-train.op.sit2 <- sample(1:nrow(x.op.sit2), nrow(x.op.sit2)*.75)
+train.op.sit2 <- sample(1:nrow(sit2_output_fin_comp), nrow(sit2_output_fin_comp)*.75)
 test.op.sit2 <- (-train.op.sit2)
 y.test.op.sit2 <- y.op.sit2[test.op.sit2]
 
@@ -747,12 +755,14 @@ sit3_input_fin_comp <- sit3_input_fin[complete.cases(sit3_input_fin),]
 sit3_input_fin_comp_scale <- sit3_input_fin_comp
 sit3_input_fin_comp_scale[3:48] <- scale(sit3_input_fin_comp_scale[3:48])
 
-x.ip.sit3<- model.matrix(runs_created ~., sit3_input_fin_comp)[,-1]
+write.csv(sit3_input_fin_comp, "~/Desktop/baseball/buntR/sit3_input.csv", row.names = FALSE)
+
+#x.ip.sit3<- model.matrix(runs_created ~., sit3_input_fin_comp)[,-1]
 y.ip.sit3 <- sit3_input_fin_comp$runs_created
 
-train.ip.sit3 <- sample(1:nrow(x.ip.sit3), nrow(x.ip.sit3)*.75)
+train.ip.sit3 <- sample(1:nrow(sit3_input_fin_comp), nrow(sit3_input_fin_comp)*.75)
 test.ip.sit3 <- (-train.ip.sit3)
-y.test.ip.sit3 <- y.ip.sit2[test.ip.sit3]
+y.test.ip.sit3 <- y.ip.sit3[test.ip.sit3]
 
 boost.bunt.sit3.ip <- gbm(runs_created ~., data = sit3_input_fin_comp[train.ip.sit3,],
                           distribution = "poisson", n.trees = 2000,
@@ -784,10 +794,12 @@ sit3_output_fin_comp <- sit3_output_fin[complete.cases(sit3_output_fin),]
 sit3_output_fin_comp_scale <- sit3_output_fin_comp
 sit3_output_fin_comp_scale[3:48] <- scale(sit3_output_fin_comp_scale[3:48])
 
-x.op.sit3<- model.matrix(runs_created ~., sit3_output_fin_comp_scale)[,-1]
+write.csv(sit3_output_fin_comp, "~/Desktop/baseball/buntR/sit3_output.csv", row.names = FALSE)
+
+#x.op.sit3<- model.matrix(runs_created ~., sit3_output_fin_comp_scale)[,-1]
 y.op.sit3 <- sit3_output_fin_comp_scale$runs_created
 
-train.op.sit3 <- sample(1:nrow(x.op.sit3), nrow(x.op.sit3)*.75)
+train.op.sit3 <- sample(1:nrow(sit3_output_fin_comp), nrow(sit3_output_fin_comp)*.75)
 test.op.sit3 <- (-train.op.sit3)
 y.test.op.sit3 <- y.op.sit3[test.op.sit3]
 
@@ -795,7 +807,7 @@ boost.bunt.sit3.op <- gbm(runs_created ~., data = sit3_output_fin_comp[train.op.
                           distribution = "poisson", n.trees = 500,
                           interaction.depth = 4)
 summary(boost.bunt.sit3.op)
-yhat.boost.sit3.op <- predict(boost.bunt.sit3.op, newdata = sit3_output_fin_comp[-train.op.sit3,], type = "response", n.trees = 2000)
+yhat.boost.sit3.op <- predict(boost.bunt.sit3.op, newdata = sit3_output_fin_comp[-train.op.sit3,], type = "response", n.trees = 500)
 mean((yhat.boost.sit3.op - y.test.op.sit3)^2)
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
@@ -825,15 +837,17 @@ sit4_input_fin_comp <- sit4_input_fin[complete.cases(sit4_input_fin),]
 sit4_input_fin_comp_scale <- sit4_input_fin_comp
 sit4_input_fin_comp_scale[3:48] <- scale(sit4_input_fin_comp_scale[3:48])
 
-x.ip.sit4<- model.matrix(runs_created ~., sit4_input_fin_comp_scale)[,-1]
+write.csv(sit4_input_fin_comp, "~/Desktop/baseball/buntR/sit4_input.csv", row.names = FALSE)
+
+#x.ip.sit4<- model.matrix(runs_created ~., sit4_input_fin_comp_scale)[,-1]
 y.ip.sit4 <- sit4_input_fin_comp_scale$runs_created
 
-train.ip.sit4 <- sample(1:nrow(x.ip.sit4), nrow(x.ip.sit4)*.75)
+train.ip.sit4 <- sample(1:nrow(sit4_input_fin_comp), nrow(sit4_input_fin_comp)*.75)
 test.ip.sit4 <- (-train.ip.sit4)
 y.test.ip.sit4 <- y.ip.sit4[test.ip.sit4]
 
 boost.bunt.sit4.ip <- gbm(runs_created ~., data = sit4_input_fin_comp[train.ip.sit4,],
-                          distribution = "poisson", n.trees = 2000,
+                          distribution = "poisson", n.trees = 500,
                           interaction.depth = 4)
 summary(boost.bunt.sit4.ip)
 yhat.boost.sit4.ip <- predict(boost.bunt.sit4.ip, newdata = sit4_input_fin_comp[-train.ip.sit4,], type = "response", n.trees = 500)
@@ -862,10 +876,12 @@ sit4_output_fin_comp <- sit4_output_fin[complete.cases(sit4_output_fin),]
 sit4_output_fin_comp_scale <- sit4_output_fin_comp
 sit4_output_fin_comp_scale[3:48] <- scale(sit4_output_fin_comp_scale[3:48])
 
-x.op.sit4<- model.matrix(runs_created ~., sit4_output_fin_comp_scale)[,-1]
+write.csv(sit4_output_fin_comp, "~/Desktop/baseball/buntR/sit4_output.csv", row.names = FALSE)
+
+#x.op.sit4<- model.matrix(runs_created ~., sit4_output_fin_comp_scale)[,-1]
 y.op.sit4 <- sit4_output_fin_comp_scale$runs_created
 
-train.op.sit4 <- sample(1:nrow(x.op.sit4), nrow(x.op.sit4)*.75)
+train.op.sit4 <- sample(1:nrow(sit4_output_fin_comp), nrow(sit4_output_fin_comp)*.75)
 test.op.sit4 <- (-train.op.sit4)
 y.test.op.sit4 <- y.op.sit4[test.op.sit4]
 
@@ -873,53 +889,252 @@ boost.bunt.sit4.op <- gbm(runs_created ~., data = sit4_output_fin_comp[train.op.
                           distribution = "poisson", n.trees = 500,
                           interaction.depth = 4)
 summary(boost.bunt.sit4.op)
-yhat.boost.sit4.op <- predict(boost.bunt.sit4.op, newdata = sit4_output_fin_comp[-train.op.sit4,], type = "response", n.trees = 2000)
+yhat.boost.sit4.op <- predict(boost.bunt.sit4.op, newdata = sit4_output_fin_comp[-train.op.sit4,], type = "response", n.trees = 500)
 mean((yhat.boost.sit4.op - y.test.op.sit4)^2)
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 # Make the model
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
-should_u_bunt <- function(outs, on1b=NULL, on2b=NULL, on3b=NULL, batter, pitcher, deck, hole){
+should_u_bunt <- function(outs, on1b=NA, on2b=NA, on3b=NA, bat, pitch, deck, hole){
   
-  df1 <- pitch_max %>% filter(pitcher == pitcher) %>%
+  inp <- pitch_max %>% filter(pitcher == pitch) %>%
     left_join(p_throw, by = "pitcher") %>%
-    cbind(filter(bat_max, batter == batter)) %>%
+    cbind(filter(bat_max, batter == bat)%>%
+            rename_with( ~ paste0(.x, ".x")) %>%
+            rename(batter = batter.x)) %>%
     left_join(stand_bat, by = c("batter", "p_throws")) %>%
     left_join(sprint_max, by = c("batter" = "player_id")) %>%
+    rename(sprint_speed.x = sprint_speed) %>%
     mutate(filter(bat_max, batter == deck) %>%
-             rename_with( ~ paste0(.x, ".y")))
+             rename_with( ~ paste0(.x, ".y"))) %>%
+    mutate(sprint_speed_1b = ifelse(is.na(on1b), NA, filter(sprint_max, player_id == on1b)[2])) %>%
+    mutate(sprint_speed_2b = ifelse(is.na(on2b), NA, filter(sprint_max, player_id == on2b)[2])) %>%
+    mutate(sprint_speed_3b = ifelse(is.na(on3b), NA, filter(sprint_max, player_id == on3b)[2])) 
+    
   
-  df2 <- pitch_max %>% filter(pitcher == pitcher) %>%
-    left_join(p_throw, by = "pitcher") %>%
-    cbind(filter(bat_max, batter == deck)) %>%
-    left_join(stand_bat, by = c("batter", "p_throws")) %>%
-    left_join(sprint_max, by = c("batter" = "player_id")) %>%
-    mutate(filter(bat_max, batter == hole) %>%
-             rename_with( ~ paste0(.x, ".y")))
+    out <- pitch_max %>% filter(pitcher == pitch) %>%
+      left_join(p_throw, by = "pitcher") %>%
+      cbind(filter(bat_max, batter == deck)%>%
+              rename_with( ~ paste0(.x, ".x")) %>%
+              rename(batter = batter.x)) %>%
+      left_join(stand_bat, by = c("batter", "p_throws")) %>%
+      left_join(sprint_max, by = c("batter" = "player_id")) %>%
+      rename(sprint_speed_bat = sprint_speed) %>%
+      mutate(filter(bat_max, batter == hole) %>%
+               rename_with( ~ paste0(.x, ".y"))) %>%
+      mutate(sprint_speed_1b = NA) %>%
+      mutate(sprint_speed_2b = ifelse(is.na(on1b), NA, filter(sprint_max, player_id == on1b)[2])) %>%
+      mutate(sprint_speed_3b = ifelse(is.na(on2b), NA, filter(sprint_max, player_id == on2b)[2]))
+
+     # if(!is.na(on2b)){
+     #   inp <- inp %>% mutate(filter(sprint_max, player_id == on2b) %>%
+     #                           ungroup() %>%
+     #                           select(sprint_speed) %>%
+     #                           rename(sprint_speed.y = sprint_speed))
+     #   
+     #   out <- out %>% mutate(filter(sprint_max, player_id == on2b) %>%
+     #                           ungroup() %>%
+     #                           select(sprint_speed) %>%
+     #                           rename(sprint_speed.y = sprint_speed))
+     # }else if(!is.na(on1b)){
+     #   inp <- inp %>% mutate(filter(sprint_max, player_id == on1b) %>%
+     #                           ungroup() %>%
+     #                          select(sprint_speed) %>%
+     #                           rename(sprint_speed.y = sprint_speed))
+     #   
+     #   out <- out %>% mutate(filter(sprint_max, player_id == on1b) %>%
+     #                           ungroup() %>%
+     #                           select(sprint_speed) %>%
+     #                           rename(sprint_speed.y = sprint_speed))
+     # }else{
+     #   stop('Situation not supported at the moment.')
+     # }
+     # 
+       inp2 <- input_df(inp) %>%
+         select(-c(batter,pitcher,batter.y, stand, p_throws)) %>%
+         mutate(game_year.x = "2022") 
+     #  
+     #  out2 <- input_df(out) %>%
+     #    select(-c(pitcher, batter,batter.y, stand, p_throws)) %>%
+     #    mutate(game_year.x = "2022") 
+     #  
+     #  if(outs ==1 & !is.na(on1b) & is.na(on2b)){
+     #    pred1 <- predict(boost.bunt.sit1.inp, newdata = inp2, type = "response", n.trees = 500)
+     #    pred2 <- predict(boost.bunt.sit1.op, newdata = out2, type = "response", n.trees = 500)
+     #  } else if(outs ==0 & !is.na(on1b) & is.na(on2b)){
+     #    pred1 <- predict(boost.bunt.sit2.inp, newdata = inp2, type = "response", n.trees = 500)
+     #    pred2 <- predict(boost.bunt.sit2.op, newdata = out2, type = "response", n.trees = 500)
+     #  } else if(outs ==0 & is.na(on1b) & !is.na(on2b)){
+     #    pred1 <- predict(boost.bunt.sit3.inp, newdata = inp2, type = "response", n.trees = 500)
+     #    pred2 <- predict(boost.bunt.sit3.op, newdata = out2, type = "response", n.trees = 500)
+     #  } else if(outs ==0 & !is.na(on1b) & !is.na(on2b)){
+     #    pred1 <- predict(boost.bunt.sit4.inp, newdata = inp2, type = "response", n.trees = 500)
+     #    pred2 <- predict(boost.bunt.sit4.op, newdata = out2, type = "response", n.trees = 500)
+     #  } else{
+     #    stop('Situation not supported at the moment.')
+     #  }
+     #  
+     #  if(pred1 > pred2){
+     #    print(paste("The expected runs created in your current sitation is", round(pred1,4),
+     #                "The expected runs created from a successful bunt is", round(pred2,4),
+     #                "We recommend NOT bunting"))
+     #  } else if(pred2 > pred1){
+     #    print(paste("The expected runs created in your current sitation is", pred1, "..",
+     #                "The expected runs created from a successful bunt is", pred2, ".",
+     #                "We recommend bunting."))
+     #  }
+     # 
   
-  if(!is.null(on2b)){
-    df1 <- df1 %>% mutate(filter(sprint_max, player_id == on2b) %>%
-                            select(sprint_speed) %>%
-                            rename(sprint_speed.y = sprint_speed))
-  }else if(!is.null(on1b)){
-    df1 <- df1 %>% mutate(filter(sprint_max, player_id == on1b) %>%
-                            select(sprint_speed) %>%
-                            rename(sprint_speed.y = sprint_speed))
-  }
+   return(inp)
   
 }
 
-df1 <- pitch_max %>% filter(pitcher == 408314) %>%
+test <- should_u_bunt(outs = 1, on1b = 571595, bat = 444489, deck = 425877, hole = 434778, 
+                      pitch = 408314)
+
+pred_inp <- predict(boost.bunt.sit1.inp, newdata = test, type = "response", n.trees = 500)
+
+inp <- pitch_max %>% filter(pitcher == 408314) %>%
   left_join(p_throw, by = "pitcher") %>%
-  cbind(filter(bat_max, batter == 405395)) %>%
+  cbind(filter(bat_max, batter == 444489)%>%
+          rename_with( ~ paste0(.x, ".x")) %>%
+          rename(batter = batter.x)) %>%
   left_join(stand_bat, by = c("batter", "p_throws")) %>%
   left_join(sprint_max, by = c("batter" = "player_id")) %>%
+  rename(sprint_speed.x = sprint_speed) %>%
   mutate(filter(bat_max, batter == 425877) %>%
-          rename_with( ~ paste0(.x, ".y")))
+           rename_with( ~ paste0(.x, ".y"))) %>%
+  mutate(sprint_speed_1b = filter(sprint_max, player_id == 571595)[2]) %>%
+  mutate(sprint_speed_2b = NA) %>%
+  mutate(sprint_speed_3b = NA,
+         outs_when_up = 1) %>%
+  ungroup()
+
+inp2 <- input_df(inp) %>%
+  select(-c(batter,pitcher,batter.y, stand, p_throws)) %>%
+  mutate(game_year.x = "2022") 
+
+df_test2 <- input_df(df_test) %>%
+  select(-c(pitcher, batter, stand, p_throws, player_id)) %>%
+  mutate(game_year.x = "2022")
+
+test[,order(colnames(test))]
+colnames(sit1_beg)
+
+comp_max <- bat_max[complete.cases(bat_max),]
+
+sit_all <- rbind(sit1_input_fin_comp %>%
+                   mutate(lead_runner = "on1b",
+                          outs = 1,
+                          num_on = 1),
+                 sit1_output_fin_comp %>%
+                   mutate(lead_runner = "on2b",
+                          outs = 2,
+                          num_on = 1),
+                 sit2_input_fin_comp %>%
+                   mutate(lead_runner = "on1b",
+                          outs = 0,
+                          num_on = 1),
+                 sit2_output_fin_comp %>%
+                   mutate(lead_runner = "on2b",
+                          outs = 1,
+                          num_on = 1),
+                 sit3_input_fin_comp %>%
+                   mutate(lead_runner = "on2b",
+                          outs = 0,
+                          num_on = 1),
+                 sit3_output_fin_comp %>%
+                   mutate(lead_runner = "on3b",
+                          outs = 1,
+                          num_on = 1),
+                 sit4_input_fin_comp %>%
+                   mutate(lead_runner = "on2b",
+                          outs = 0,
+                          num_on = 2),
+                 sit4_output_fin_comp %>%
+                   mutate(lead_runner = "on3b",
+                          outs = 1,
+                          num_on = 2))
+
+sit_all$lead_runner <- as.factor(sit_all$lead_runner)
+
+y.all <- sit_all$runs_created
+
+train.all <- sample(1:nrow(sit_all), nrow(sit_all)*.75)
+test.all <- (-train.all)
+y.test.all <- y.all[test.all]
+
+boost.bunt.all <- gbm(runs_created ~., data = sit_all,
+                          distribution = "poisson", n.trees = 1255,
+                          interaction.depth = 4)
+print(boost.bunt.all)
+sqrt(min(boost.bunt.all$cv.error))
+gbm.perf(boost.bunt.all, method = "cv")
+summary(boost.bunt.all)
+yhat.boost.all <- predict(boost.bunt.all, newdata = sit_all[-train.all,], type = "response", n.trees = 1500)
+mean((yhat.boost.all - y.test.all)^2)
+
+hyper_grid <- expand.grid(
+  shrinkage = c(.01, .1, .3),
+  interaction.depth = c(1, 3, 5),
+  n.minobsinnode = c(5, 10, 15),
+  bag.fraction = c(.65, .8, 1), 
+  optimal_trees = 0,               # a place to dump results
+  min_RMSE = 0                     # a place to dump results
+)
+
+nrow(hyper_grid)
+
+# randomize data
+random_index <- sample(1:nrow(sit_all), nrow(sit_all))
+random_sit_all <- sit_all[random_index, ]
+
+# grid search 
+for(i in 1:nrow(hyper_grid)) {
+  
+  # reproducibility
+  set.seed(123)
+  
+  # train model
+  gbm.tune <- gbm(
+    formula = runs_created ~ .,
+    distribution = "poisson",
+    data = random_sit_all,
+    n.trees = 5000,
+    interaction.depth = hyper_grid$interaction.depth[i],
+    shrinkage = hyper_grid$shrinkage[i],
+    n.minobsinnode = hyper_grid$n.minobsinnode[i],
+    bag.fraction = hyper_grid$bag.fraction[i],
+    train.fraction = .75,
+    n.cores = NULL, # will use all cores by default
+    verbose = FALSE
+  )
+  
+  # add min training error and trees to grid
+  hyper_grid$optimal_trees[i] <- which.min(gbm.tune$valid.error)
+  hyper_grid$min_RMSE[i] <- sqrt(min(gbm.tune$valid.error))
+}
+     
+
+rm(sit1_beg, sit1_end, sit1_input, sit1_input_fin, sit1_input_fin_comp_scale,
+   sit2_beg, sit2_end, sit2_input, sit2_input_fin, sit2_input_fin_comp_scale,
+   sit3_beg, sit3_end, sit3_input, sit3_input_fin, sit3_input_fin_comp_scale,
+   sit4_beg, sit4_end, sit4_input, sit4_input_fin, sit4_input_fin_comp_scale,
+   sit1_output, sit1_output_fin, sit1_output_fin_comp_scale,
+   sit2_output, sit2_output_fin, sit2_output_fin_comp_scale,
+   sit3_output, sit3_output_fin, sit3_output_fin_comp_scale,
+   sit4_output, sit4_output_fin, sit4_output_fin_comp_scale)
+
+rm(x)
 
 
+pred1_test <- 556
+pred2_test <- 87
 
+df_test <- data.frame("Expected Runs - No Bunt" = pred1_test,
+                      "Expected Runs - Bunt" = pred2_test,
+                      recommendation = ifelse(pred1_test >= pred2_test, "Don't Bunt", "Bunt"))
 
 
 
