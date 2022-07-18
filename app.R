@@ -1,0 +1,164 @@
+#
+# This is a Shiny web application. You can run the application by clicking
+# the 'Run App' button above.
+#
+# Find out more about building applications with Shiny here:
+#
+#    http://shiny.rstudio.com/
+#
+
+library(shiny)
+library(dqshiny)
+
+model <- readRDS("model.rds")
+pitch_max <- readRDS("data/pitch_max.rds")
+bat_max <- readRDS("data/bat_max.rds")
+sprint_max <- readRDS("data/sprint_max.rds")
+stand_bat <- readRDS("data/stand_bat.rds")
+p_throw <- readRDS("data/p_throw.rds")
+
+bat_names <- as.list(bat_max$hitter_name)
+pit_names <- as.list(pitch_max$pitcher_name)
+run_names <- as.list(sprint_max$player_name)
+
+####################################
+# User interface                   #
+####################################
+ui <- fluidPage(theme = shinytheme("cerulean"),
+
+    # Application title
+    titlePanel("Should You Sacrafice Bunt?"),
+
+    # Sidebar with a slider input for number of bins 
+    sidebarLayout(
+        sidebarPanel(
+            selectInput("outs_when_up", label = "Outs",
+                        choices = list(0, 1),
+                        selected = 0),
+            autocomplete_input(id = "bat",
+                         label = "Batter",
+                         options = bat_names,
+                         max_options = 10,
+                         value = "Leury Garcia"),
+            autocomplete_input(id = "pitch",
+                         label = "Pitcher",
+                         options = pit_names,
+                         max_options = 10,
+                         value = "Gerrit Cole"),
+            autocomplete_input(id = "on1b",
+                         label = "On First",
+                         options = run_names,
+                         max_options = 10),
+            autocomplete_input("on2b",
+                         label = "On Second",
+                         options = run_names,
+                         max_options = 10),
+            autocomplete_input("on3b",
+                         label = "On Third",
+                         options = run_names,
+                         max_options = 10),
+            autocomplete_input("deck",
+                         label = "On Deck",
+                         options = bat_names,
+                         max_options = 10,
+                         value = "Tim Anderson"),
+            autocomplete_input("hole",
+                         label = "In the hole",
+                         options = bat_names,
+                         max_options = 10,
+                         value = "Yoan Moncada"),
+            
+            actionButton("submitbutton", "Submit", 
+                         class = "btn btn-primary")
+        ),
+
+        # Show a plot of the generated distribution
+        mainPanel(
+           tags$label(h3('Output')),
+        #   verbatimTextOutput('contents'),
+           tableOutput('tabledata')
+        )
+    )
+)
+
+# Define server logic required to draw a histogram
+server <- function(input, output) {
+
+    #Input data
+  datasetInput <- reactive({
+    
+
+    inp <- pitch_max %>% filter(pitcher_name == input$pitch) %>%
+      left_join(p_throw, by = "pitcher") %>%
+      cbind(filter(bat_max, hitter_name == input$bat)%>%
+              rename_with( ~ paste0(.x, ".x")) %>%
+              rename(batter = batter.x)) %>%
+      left_join(stand_bat, by = c("batter", "p_throws")) %>%
+      left_join(sprint_max, by = c("batter" = "player_id")) %>%
+      rename(sprint_speed_bat = sprint_speed) %>%
+      mutate(filter(bat_max, hitter_name == input$deck) %>%
+               rename_with( ~ paste0(.x, ".y"))) %>%
+      mutate(sprint_speed_1b = ifelse(is.na(input$on1b), NA, as.numeric(filter(sprint_max, player_name == input$on1b)[2]))) %>%
+      mutate(sprint_speed_2b = ifelse(is.na(input$on2b), NA, as.numeric(filter(sprint_max, player_name == input$on2b)[2]))) %>%
+      mutate(sprint_speed_3b = ifelse(is.na(input$on3b), NA, as.numeric(filter(sprint_max, player_name == input$on3b)[2]))) %>%
+      mutate(outs_when_up = as.numeric(input$outs_when_up)) %>%
+      ungroup()
+    
+    inp2 <- input_df(inp) %>%
+      select(-c(batter,hitter_name.x, pitcher,pitcher_name,hitter_name.y, batter.y, stand, p_throws)) %>%
+      mutate(game_year.x = "2022") 
+    
+    
+    out <- pitch_max %>% filter(pitcher_name == input$pitch) %>%
+      left_join(p_throw, by = "pitcher") %>%
+      cbind(filter(bat_max, hitter_name == input$deck)%>%
+              rename_with( ~ paste0(.x, ".x")) %>%
+              rename(batter = batter.x)) %>%
+      left_join(stand_bat, by = c("batter", "p_throws")) %>%
+      left_join(sprint_max, by = c("batter" = "player_id")) %>%
+      rename(sprint_speed_bat = sprint_speed) %>%
+      mutate(filter(bat_max, hitter_name == input$hole) %>%
+               rename_with( ~ paste0(.x, ".y"))) %>%
+      mutate(sprint_speed_1b = NA) %>%
+      mutate(sprint_speed_2b = ifelse(is.na(input$on1b), NA, as.numeric(filter(sprint_max, player_name == input$on1b)[2]))) %>%
+      mutate(sprint_speed_3b = ifelse(is.na(input$on2b), NA, as.numeric(filter(sprint_max, player_name == input$on2b)[2]))) %>%
+      mutate(outs_when_up = as.numeric(input$outs_when_up) + 1) %>%
+      ungroup()
+    
+    out2 <- input_df(out) %>%
+      select(-c(batter,hitter_name.x,pitcher,pitcher_name, batter.y,hitter_name.y, stand, p_throws)) %>%
+      mutate(game_year.x = "2022")
+    
+    set.seed(3535)
+    
+    pred1 <- predict(model, newdata = inp2, type = "response", n.trees = 500)
+    pred2 <- predict(model, newdata = out2, type = "response", n.trees = 500)
+    
+    # if(pred1 >= pred2){
+    #       print(paste("The expected runs created in your current sitation is", round(pred1,4),
+    #                   "The expected runs created from a successful bunt is", round(pred2,4),
+    #                   "We recommend NOT bunting"))
+    #     } else if(pred2 > pred1){
+    #       print(paste("The expected runs created in your current sitation is", pred1, "..",
+    #                   "The expected runs created from a successful bunt is", pred2, ".",
+    #                   "We recommend bunting."))
+    #     }
+    
+    df_output <- data.frame("Expected.Runs.No Bunt" = pred1,
+                          "Expected Runs.Bunt" = pred2,
+                          Recommendation = ifelse(pred1 >= pred2, "Don't Bunt", "Bunt"))
+    
+    print(df_output)
+    
+    
+  })
+  
+  output$tabledata <- renderTable({
+    if (input$submitbutton > 0) {
+      isolate(datasetInput())
+    }
+  })
+}
+
+# Run the application 
+shinyApp(ui = ui, server = server)
