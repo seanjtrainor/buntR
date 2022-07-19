@@ -1,15 +1,23 @@
-#
-# This is a Shiny web application. You can run the application by clicking
-# the 'Run App' button above.
-#
-# Find out more about building applications with Shiny here:
-#
-#    http://shiny.rstudio.com/
-#
+---
+title: "shinyapp"
+output: html_document
+date: "2022-07-19"
+---
 
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+```{r}
+#install packages
 library(shiny)
 library(dqshiny)
+```
 
+```{r}
+#bring in needed files
 model <- readRDS("model.rds")
 pitch_max <- readRDS("data/pitch_max.rds")
 bat_max <- readRDS("data/bat_max.rds")
@@ -21,9 +29,12 @@ bat_names <- as.list(bat_max$hitter_name)
 pit_names <- as.list(pitch_max$pitcher_name)
 run_names <- as.list(sprint_max$player_name)
 
-####################################
-# User interface                   #
-####################################
+```
+
+
+## User Interface
+
+```{r}
 ui <- fluidPage(theme = shinytheme("cerulean"),
 
     # Application title
@@ -169,3 +180,7 @@ server <- function(input, output) {
 
 # Run the application 
 shinyApp(ui = ui, server = server)
+```
+
+
+

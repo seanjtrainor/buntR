@@ -29,23 +29,23 @@ chadwick_player_lu_table <- subset(chadwick_player_lu(), !is.na(key_mlbam)) %>%
 
 #bring in sprint speeds
 
-sprint.speed18 <- read.csv("~/Desktop/baseball/buntR/sprint_speed_18.csv") %>%
+sprint.speed18 <- read.csv("~/data/sprint_speed_18.csv") %>%
   dplyr::select(player_id, sprint_speed) %>% 
   dplyr::mutate(game_year = "2018")
 
-sprint.speed19 <- read.csv("~/Desktop/baseball/buntR/sprint_speed_19.csv") %>%
+sprint.speed19 <- read.csv("~/data/sprint_speed_19.csv") %>%
   dplyr::select(player_id, sprint_speed) %>% 
   dplyr::mutate(game_year = "2019")
 
-sprint.speed20 <- read.csv("~/Desktop/baseball/buntR/sprint_speed_20.csv") %>%
+sprint.speed20 <- read.csv("~/data/sprint_speed_20.csv") %>%
   dplyr::select(player_id, sprint_speed) %>% 
   dplyr::mutate(game_year = "2020")
 
-sprint.speed21 <- read.csv("~/Desktop/baseball/buntR/sprint_speed_21.csv") %>%
+sprint.speed21 <- read.csv("~/data/sprint_speed_21.csv") %>%
   dplyr::select(player_id, sprint_speed) %>% 
   dplyr::mutate(game_year = "2021")
 
-sprint.speed22 <- read.csv("~/Desktop/baseball/buntR/sprint_speed_22.csv") %>%
+sprint.speed22 <- read.csv("~/data/sprint_speed_22.csv") %>%
   dplyr::select(player_id, sprint_speed) %>% 
   dplyr::mutate(game_year = "2022")
 
