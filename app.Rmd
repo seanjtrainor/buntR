@@ -66,10 +66,10 @@ ui <- fluidPage(theme = shinytheme("cerulean"),
                          options = run_names,
                          max_options = 10,
                          value = "Josh Harrison"),
-            autocomplete_input("on3b",
-                         label = "On Third",
-                         options = run_names,
-                         max_options = 10),
+            # autocomplete_input("on3b",
+            #              label = "On Third",
+            #              options = run_names,
+            #              max_options = 10),
             autocomplete_input("deck",
                          label = "On Deck",
                          options = bat_names,
@@ -119,7 +119,7 @@ server <- function(input, output) {
                rename_with( ~ paste0(.x, ".y"))) %>%
       mutate(sprint_speed_1b = ifelse(is.na(input$on1b), NA, as.numeric(filter(sprint_max, player_name == input$on1b)[2]))) %>%
       mutate(sprint_speed_2b = ifelse(is.na(input$on2b), NA, as.numeric(filter(sprint_max, player_name == input$on2b)[2]))) %>%
-      mutate(sprint_speed_3b = ifelse(is.na(input$on3b), NA, as.numeric(filter(sprint_max, player_name == input$on3b)[2]))) %>%
+      mutate(sprint_speed_3b = NA) %>%
       mutate(outs_when_up = as.numeric(input$outs_when_up)) %>%
       ungroup()
     
