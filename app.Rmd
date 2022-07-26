@@ -14,6 +14,7 @@ knitr::opts_chunk$set(echo = TRUE)
 #install packages
 library(shiny)
 library(dqshiny)
+library(shinythemes)
 ```
 
 ```{r}

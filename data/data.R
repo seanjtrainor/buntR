@@ -516,6 +516,7 @@ saveRDS(bat_max, "data/bat_max.rds")
 saveRDS(sprint_max, "data/sprint_max.rds")
 saveRDS(stand_bat, "data/stand_bat.rds")
 saveRDS(p_throw, "data/p_throw.rds")
+saveRDS(input_df, "data/input_df.rds")
 
 bat_names <- as.list(bat_max$hitter_name)
 pit_names <- as.list(pitch_max$pitcher_name)

@@ -9,6 +9,22 @@
 
 library(shiny)
 library(dqshiny)
+library(shinythemes)
+library(dplyr)
+library(gbm)
+
+#usePackage <- function(p) {
+#  if(!is.element(p, installed.packages()[,1]))
+#    install.packages(p, dep = TRUE)
+#  require(p, character.only = TRUE)
+#}
+
+
+#listPackages <- c("baseballr", "dplyr", "RcppRoll", "zoo", "lubridate", "tidyverse",
+#                  "tree", "caret", "randomForest", "rvest", "ggalt", "remotes", "gbm", "glmnet", "shiny", "shinythemes",
+#                  "dqshiny")
+#
+#sapply(listPackages, usePackage)
 
 model <- readRDS("model.rds")
 pitch_max <- readRDS("data/pitch_max.rds")
@@ -16,6 +32,7 @@ bat_max <- readRDS("data/bat_max.rds")
 sprint_max <- readRDS("data/sprint_max.rds")
 stand_bat <- readRDS("data/stand_bat.rds")
 p_throw <- readRDS("data/p_throw.rds")
+input_df <- readRDS("data/input_df.rds")
 
 bat_names <- as.list(bat_max$hitter_name)
 pit_names <- as.list(pitch_max$pitcher_name)
@@ -27,7 +44,7 @@ run_names <- as.list(sprint_max$player_name)
 ui <- fluidPage(theme = shinytheme("cerulean"),
 
     # Application title
-    titlePanel("Should You Sacrafice Bunt?"),
+    titlePanel("Should You Sacrifice Bunt?"),
 
     # Sidebar with a slider input for number of bins 
     sidebarLayout(
@@ -54,10 +71,10 @@ ui <- fluidPage(theme = shinytheme("cerulean"),
                          options = run_names,
                          max_options = 10,
                          value = "Josh Harrison"),
-            autocomplete_input("on3b",
-                         label = "On Third",
-                         options = run_names,
-                         max_options = 10),
+            # autocomplete_input("on3b",
+            #              label = "On Third",
+            #              options = run_names,
+            #              max_options = 10),
             autocomplete_input("deck",
                          label = "On Deck",
                          options = bat_names,
@@ -107,7 +124,8 @@ server <- function(input, output) {
                rename_with( ~ paste0(.x, ".y"))) %>%
       mutate(sprint_speed_1b = ifelse(is.na(input$on1b), NA, as.numeric(filter(sprint_max, player_name == input$on1b)[2]))) %>%
       mutate(sprint_speed_2b = ifelse(is.na(input$on2b), NA, as.numeric(filter(sprint_max, player_name == input$on2b)[2]))) %>%
-      mutate(sprint_speed_3b = ifelse(is.na(input$on3b), NA, as.numeric(filter(sprint_max, player_name == input$on3b)[2]))) %>%
+#      mutate(sprint_speed_3b = ifelse(is.na(input$on3b), NA, as.numeric(filter(sprint_max, player_name == input$on3b)[2]))) %>%
+      mutate(sprint_speed_3b = NA) %>%
       mutate(outs_when_up = as.numeric(input$outs_when_up)) %>%
       ungroup()
     
