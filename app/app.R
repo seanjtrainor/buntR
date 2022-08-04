@@ -1,17 +1,12 @@
----
-title: "shinyapp"
-output: html_document
-date: "2022-07-19"
----
+#
+# This is a Shiny web application. You can run the application by clicking
+# the 'Run App' button above.
+#
+# Find out more about building applications with Shiny here:
+#
+#    http://shiny.rstudio.com/
+#
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-```
-
-## R Markdown
-
-```{r, include = FALSE}
-#install packages
 library(shiny)
 library(dqshiny)
 library(shinythemes)
@@ -20,28 +15,35 @@ library(gbm)
 library(xgboost)
 library(tibble)
 library(caret)
-```
 
-```{r, include = FALSE}
-#bring in needed files
-model <- readRDS("model.rds")
-pitch_max <- readRDS("data/pitch_max.rds")
-bat_max <- readRDS("data/bat_max.rds")
-sprint_max <- readRDS("data/sprint_max.rds")
-stand_bat <- readRDS("data/stand_bat.rds")
-p_throw <- readRDS("data/p_throw.rds")
-input_df <- readRDS("data/input_df.rds")
+#usePackage <- function(p) {
+#  if(!is.element(p, installed.packages()[,1]))
+#    install.packages(p, dep = TRUE)
+#  require(p, character.only = TRUE)
+#}
+
+
+#listPackages <- c("baseballr", "dplyr", "RcppRoll", "zoo", "lubridate", "tidyverse",
+#                  "tree", "caret", "randomForest", "rvest", "ggalt", "remotes", "gbm", "glmnet", "shiny", "shinythemes",
+#                  "dqshiny")
+#
+#sapply(listPackages, usePackage)
+
+model <- readRDS("app/model.rds")
+pitch_max <- readRDS("app/data/pitch_max.rds")
+bat_max <- readRDS("app/data/bat_max.rds")
+sprint_max <- readRDS("app/data/sprint_max.rds")
+stand_bat <- readRDS("app/data/stand_bat.rds")
+p_throw <- readRDS("app/data/p_throw.rds")
+input_df <- readRDS("app/data/input_df.rds")
 
 bat_names <- as.list(bat_max$hitter_name)
 pit_names <- as.list(pitch_max$pitcher_name)
 run_names <- as.list(sprint_max$player_name)
 
-```
-
-
-## User Interface
-
-```{r, include = FALSE}
+####################################
+# User interface                   #
+####################################
 ui <- fluidPage(theme = shinytheme("cerulean"),
 
     # Application title
@@ -206,7 +208,3 @@ server <- function(input, output) {
 
 # Run the application 
 shinyApp(ui = ui, server = server)
-```
-
-
-
