@@ -164,6 +164,8 @@ roll_fip <- function (x, r=NULL, rl_excl="N") {
   df_join
 }
 
+saveRDS(roll_fip, "data/roll_fip.rds")
+
 
 roll_woba <- function (x, r=NULL, rl_excl="N") {
   if(rl_excl == "Y"){  #Determines if the rolling sum should be broken out by pitcher handedness
@@ -324,7 +326,7 @@ roll_woba <- function (x, r=NULL, rl_excl="N") {
   return(df_join)
 }
 
-
+saveRDS(roll_woba, "data/roll_woba.rds")
 
 roll_lg_woba <- function (x, r=NULL, rl_excl="N") {
   if(rl_excl == "Y"){  #Determines if the rolling sum should be broken out by pitcher handedness
@@ -485,3 +487,4 @@ roll_lg_woba <- function (x, r=NULL, rl_excl="N") {
   return(df_join)
 }
 
+saveRDS(roll_lg_woba, "data/roll_lg_woba.rds")

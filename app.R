@@ -12,6 +12,9 @@ library(dqshiny)
 library(shinythemes)
 library(dplyr)
 library(gbm)
+library(xgboost)
+library(tibble)
+library(caret)
 
 #usePackage <- function(p) {
 #  if(!is.element(p, installed.packages()[,1]))
@@ -130,8 +133,16 @@ server <- function(input, output) {
       ungroup()
     
     inp2 <- input_df(inp) %>%
-      select(-c(batter,hitter_name.x, pitcher,pitcher_name,hitter_name.y, batter.y, stand, p_throws)) %>%
-      mutate(game_year.x = "2022") 
+      select(-c(batter,hitter_name.x, pitcher,player_name,pitcher_name,hitter_name.y, batter.y, stand, p_throws)) %>%
+      mutate(game_year.x = "2022") %>%
+      select(c(game_year.x, outs_when_up, BF_cum_tot.x, cum_b_k_rate.x, cum_b_bb_rate.x, BF_cum_hand, cum_b_k_rate_hand,
+               cum_b_bb_rate_hand, BF_rol_tot.x, rol_b_k_rate.x, rol_b_bb_rate.x, BF_rol_hand, rol_b_k_rate_hand,
+               rol_b_bb_rate_hand, wRC_cum_tot.x, wRC_cum_hand, wRC_rol_tot.x, wRC_rol_hand, FIP_cum_tot, cum_p_k_rate,
+               cum_p_bb_rate, FIP_cum_hand, cum_p_k_rate_hand, cum_p_bb_rate_hand, FIP_rol_tot, rol_p_k_rate, rol_p_bb_rate,
+               FIP_rol_hand, rol_p_k_rate_hand, rol_p_bb_rate_hand, sprint_speed_bat, BF_cum_tot.y, cum_b_k_rate.y, cum_b_bb_rate.y,
+               BF_cum_hand_od, cum_b_k_rate_hand_od, cum_b_bb_rate_hand_od, BF_rol_tot.y, rol_b_k_rate.y, rol_b_bb_rate.y,
+               BF_rol_hand_od, rol_b_k_rate_hand_od, rol_b_bb_rate_hand_od, wRC_cum_tot.y, wRC_cum_hand_od, wRC_rol_tot.y,
+               wRC_rol_hand_od, sprint_speed_1b, sprint_speed_2b, sprint_speed_3b))
     
     
     out <- pitch_max %>% filter(pitcher_name == input$pitch) %>%
@@ -151,13 +162,24 @@ server <- function(input, output) {
       ungroup()
     
     out2 <- input_df(out) %>%
-      select(-c(batter,hitter_name.x,pitcher,pitcher_name, batter.y,hitter_name.y, stand, p_throws)) %>%
-      mutate(game_year.x = "2022")
+      select(-c(batter,hitter_name.x,pitcher,pitcher_name,player_name, batter.y,hitter_name.y, stand, p_throws)) %>%
+      mutate(game_year.x = "2022") %>%
+      select(c(game_year.x, outs_when_up, BF_cum_tot.x, cum_b_k_rate.x, cum_b_bb_rate.x, BF_cum_hand, cum_b_k_rate_hand,
+               cum_b_bb_rate_hand, BF_rol_tot.x, rol_b_k_rate.x, rol_b_bb_rate.x, BF_rol_hand, rol_b_k_rate_hand,
+               rol_b_bb_rate_hand, wRC_cum_tot.x, wRC_cum_hand, wRC_rol_tot.x, wRC_rol_hand, FIP_cum_tot, cum_p_k_rate,
+               cum_p_bb_rate, FIP_cum_hand, cum_p_k_rate_hand, cum_p_bb_rate_hand, FIP_rol_tot, rol_p_k_rate, rol_p_bb_rate,
+               FIP_rol_hand, rol_p_k_rate_hand, rol_p_bb_rate_hand, sprint_speed_bat, BF_cum_tot.y, cum_b_k_rate.y, cum_b_bb_rate.y,
+               BF_cum_hand_od, cum_b_k_rate_hand_od, cum_b_bb_rate_hand_od, BF_rol_tot.y, rol_b_k_rate.y, rol_b_bb_rate.y,
+               BF_rol_hand_od, rol_b_k_rate_hand_od, rol_b_bb_rate_hand_od, wRC_cum_tot.y, wRC_cum_hand_od, wRC_rol_tot.y,
+               wRC_rol_hand_od, sprint_speed_1b, sprint_speed_2b, sprint_speed_3b))
     
     set.seed(3535)
     
-    pred1 <- predict(model, newdata = inp2, type = "response", n.trees = 500)
-    pred2 <- predict(model, newdata = out2, type = "response", n.trees = 500)
+    inp3 <- xgb.DMatrix(data = data.matrix(inp2))
+    out3 <- xgb.DMatrix(data = data.matrix(out2))
+    
+    pred1 <- predict(model, inp3)
+    pred2 <- predict(model, out3)
     
     # if(pred1 >= pred2){
     #       print(paste("The expected runs created in your current sitation is", round(pred1,4),
@@ -169,12 +191,11 @@ server <- function(input, output) {
     #                   "We recommend bunting."))
     #     }
     
-    df_output <- data.frame("Expected.Runs.No Bunt" = pred1,
-                          "Expected Runs.Bunt" = pred2,
+    df_output <- tibble("Expected Runs - No Bunt" = pred1,
+                          "Expected Runs - Bunt" = pred2,
                           Recommendation = ifelse(pred1 >= pred2, "Don't Bunt", "Bunt"))
     
     print(df_output)
-    
     
   })
   

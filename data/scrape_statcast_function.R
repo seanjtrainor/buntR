@@ -122,6 +122,8 @@ scrape_statcast_savant_v2 <- function(start_date = Sys.Date() - 1, end_date = Sy
   return(payload)
 } 
 
+saveRDS(scrape_statcast_savant_v2, "data/scrape_statcast_savant_v2.rds")
+
 season_pbp <- function(year) {
   if (year == 2017) {
     p_date = "2017-04-02"
@@ -145,6 +147,7 @@ season_pbp <- function(year) {
   } else if (year == 2022){
     p_date = "2022-04-07"
     all_date <- seq(as.Date("2022-04-08"), (Sys.Date() - 1), by = "days")
+    all_date <- all_date[c(102:104)]
   }
   else (stop('outside date range'))
   
@@ -191,6 +194,7 @@ season_pbp <- function(year) {
   return(pbp_fin)
 }
 
+saveRDS(season_pbp, "data/season_pbp.rds")
 
 
 
